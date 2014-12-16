@@ -544,8 +544,8 @@ function NodeViewer(vm){
                     })
                     .html(print_this);
             }
-            
-            update();
+            d3.select(this).classed("fixed", d.fixed = false);
+//            update();
         }
 
         function dragstop(d) {
