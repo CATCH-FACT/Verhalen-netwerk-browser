@@ -62,10 +62,9 @@ p {
 }
 
 
-.fixed{
-    stroke: #ff00ff;
-    fill: #f00;
-    stroke-width: 2px;
+.fixed {
+    fill: #eeeeee;
+    stroke-width: 1px;
 }
 
 .node circle {

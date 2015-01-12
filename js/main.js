@@ -141,6 +141,7 @@ subgenre_colors = { "broodjeaapverhaal": "#00BFFF",
                     "personal_narrative": "#DA70D6",
                     "legende": "#6A5ACD",
                     "exempel": "#FFA500",
+                    "mythe": "#555555",
                     "lied": "#FF00FF",
                     "kwispel": "#FF0066",
                     "other": "#FF0000", 
@@ -337,7 +338,7 @@ function ViewModel() {
     self.doSolrSearch = function () {
         self.clearData();
         
-        var collection = "collectionid:1";
+        var collection = "collection_id:1";
         var return_fields = "fl=id,identifier";
         
         get_id_list_command = solr_search_proxy + self.solr_search_command() + "&" + collection + "&" + return_fields;

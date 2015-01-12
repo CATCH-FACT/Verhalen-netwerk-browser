@@ -9,7 +9,7 @@
         <script type="text/javascript" src="js/main.js"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css" media="all"/>
         <link rel="stylesheet" type="text/css" href="css/jquery-ui.min.css" media="all"/>
-        <title>Nederlandse Volksverhalenkaart 2014</title>
+        <title>Nederlandse Volksverhalen Netwerk</title>
     </head>
   
     <body>

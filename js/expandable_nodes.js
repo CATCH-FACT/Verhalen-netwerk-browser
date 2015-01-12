@@ -145,7 +145,7 @@ function NodeViewer(vm){
         }
 
         function zoomed() {
-            vm.node_params()["gravity"].value(Math.min((d3.event.scale + 600)/3500), 0.5);
+            vm.node_params()["gravity"].value(Math.min((d3.event.scale + 600)/4000), 0.2);
             vm.node_params()["charge"].value(-(d3.event.scale));
             vm.node_params.valueHasMutated();
         }
@@ -237,7 +237,7 @@ function NodeViewer(vm){
                     return link.score / 15;
                 });
 
-            force_drag = force.drag().on("dragstart", dragstart);
+            force_drag = force.drag().on("dragstart", dragstart); //interferes with doubleclick!! AARGGH
 
             // Update links.
             link = link.data(graph.links);
@@ -305,7 +305,7 @@ function NodeViewer(vm){
                     return (d.subgenre ? "node " + d.subgenre[0].replace(" ", "_") : "node other");
                 }) //determine color based on genre
                 .on("dblclick", collect_neighbors)
-                .on("click", left_click_node)
+                .on("click", left_click_node_wait)
 //                .on("contextmenu", right_click_node)
                 .on("contextmenu", dragstop)
                 .on("dblclick", dragstop)
@@ -492,9 +492,18 @@ function NodeViewer(vm){
 //            update();
         }
 
+
+        function left_click_node_wait(item_data){
+            setTimeout(function(){
+//                d3.event.preventDefault();
+                left_click_node(item_data)
+            }, 300);
+        }
+        
+        
         // Toggle children on click.
         function left_click_node(item_data) {
-            d3.event.preventDefault();
+//            d3.event.preventDefault();
 //            console.log(item_data);
 
             pinging_link = [];
@@ -544,7 +553,7 @@ function NodeViewer(vm){
                     })
                     .html(print_this);
             }
-            d3.select(this).classed("fixed", d.fixed = false);
+//            d3.select(this).classed("fixed", item_data.fixed = false);
 //            update();
         }
 
