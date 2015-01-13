@@ -6,6 +6,10 @@ function NodeViewer(vm){
         
         var pinging = [];
         var pinging_link = [];
+
+        var shiftKey;
+        
+        var brushCell;
         
         var w = 1200, //start dimensions
             h = 800,
@@ -28,103 +32,33 @@ function NodeViewer(vm){
             .size([w, h]);
 //            .on("tick", tick);
 
-        var svg = d3.select("body").append("svg")
-//            .attr("viewBox", "0 0 " + w + " " + h) //scaling everything when window size changes
+
+        var x = d3.scale.identity().domain([0, w])
+
+        var y = d3.scale.identity().domain([0, h])
+
+        var brush = d3.svg.brush()
+                        .x(x)
+                        .y(y)
+                        .on("brushstart", brushstart)
+                        .on("brush", brushmove)
+                        .on("brushend", brushend);
+
+        var svg = d3.select("body")
+            .attr("tabindex", 1)
+            .on("keydown.brush", keyflip_down)
+            .on("keyup.brush", keyflip_up)
+            .each(function() { this.focus(); })        
+            .append("svg")
             .attr("width", w)
             .attr("height", h)
             .call(zoom);
-            
-        d3.select("svg")
-            .on("dblclick.zoom", null)
-            .on("click", null)
-            .on("drag", null)
-            .on( "mousedown", function() {
-/*                if( !d3.event.ctrlKey) {
-                    d3.selectAll( 'g.selected').classed( "selected", false);
-                }
-
-                var p = d3.mouse( this);
-
-                svg.append( "rect")
-                .attr({
-                    rx      : 6,
-                    ry      : 6,
-                    class   : "selection",
-                    x       : p[0],
-                    y       : p[1],
-                    width   : 0,
-                    height  : 0
-                })*/
-            })
-            .on( "mousemove", function() {
-/*                var s = svg.select( "rect.selection");
-
-                if( !s.empty()) {
-                    var p = d3.mouse( this),
-                        d = {
-                            x       : parseInt( s.attr( "x"), 10),
-                            y       : parseInt( s.attr( "y"), 10),
-                            width   : parseInt( s.attr( "width"), 10),
-                            height  : parseInt( s.attr( "height"), 10)
-                        },
-                        move = {
-                            x : p[0] - d.x,
-                            y : p[1] - d.y
-                        }
-                    ;
-
-                    if( move.x < 1 || (move.x*2<d.width)) {
-                        d.x = p[0];
-                        d.width -= move.x;
-                    } else {
-                        d.width = move.x;       
-                    }
-
-                    if( move.y < 1 || (move.y*2<d.height)) {
-                        d.y = p[1];
-                        d.height -= move.y;
-                    } else {
-                        d.height = move.y;       
-                    }
-
-                    s.attr( d);
-
-                        // deselect all temporary selected state objects
-                    d3.selectAll( 'g.state.selection.selected').classed( "selected", false);
-
-                    d3.selectAll( 'g.state >circle.inner').each( function( state_data, i) {
-                        if( 
-                            !d3.select( this).classed( "selected") && 
-                                // inner circle inside selection frame
-                            state_data.x-radius>=d.x && state_data.x+radius<=d.x+d.width && 
-                            state_data.y-radius>=d.y && state_data.y+radius<=d.y+d.height
-                        ) {
-
-                            d3.select( this.parentNode)
-                            .classed( "selection", true)
-                            .classed( "selected", true);
-                        }
-                    });
-                }*/
-            })
-            .on( "mouseup", function() {
-                   // remove selection frame
-                svg.selectAll( "rect.selection").remove();
-
-                    // remove temporary selection marker class
-                d3.selectAll( 'g.state.selection').classed( "selection", false);
-            })
-            .on( "mouseout", function() {
-/*                if( d3.event.relatedTarget.tagName=='HTML') {
-                        // remove selection frame
-                    svg.selectAll( "rect.selection").remove();
-
-                        // remove temporary selection marker class
-                    d3.selectAll( 'g.state.selection').classed( "selection", false);
-                }*/
-            });
-            
-
+        
+        var brush_layer = svg.append("g")
+                .datum(function() { return {selected: false, previouslySelected: false}; })
+                .attr("class", "brush")
+                .call(brush);
+        
         var link = svg.append("g")
                       .attr("class", "links")
                       .selectAll(".link");
@@ -133,15 +67,48 @@ function NodeViewer(vm){
                         .attr("class", "nodes")
                         .selectAll(".node");
 
+
         updateWindow();
         window.onresize = updateWindow;
 
-        var pin_button = svg.selectAll(".pin_button");
+        function keyflip_down() {
+            shiftKey = d3.event.shiftKey || d3.event.metaKey;
+        }
+
+        function keyflip_up() {
+            shiftKey = d3.event.shiftKey || d3.event.metaKey;
+            vm.selected_nodes(force.nodes().filter(function(d) { if (d.selected) return d }));
+            vm.doFacetSearch();
+        }
+
+        // Clear the previously-active brush, if any.
+        function brushstart(d) {
+            node.each(function(d) { d.previouslySelected = shiftKey && d.selected; });
+        }
+
+        // Highlight the selected circles.
+        function brushmove(d) {
+            var extent = d3.event.target.extent();
+                node.classed("selected", function(d) {
+                    return d.selected = d.previouslySelected ^ (extent[0][0] <= d.x && d.x < extent[1][0]  && extent[0][1] <= d.y && d.y < extent[1][1]);
+            });
+        }
+
+        // If the brush is empty, select all circles.
+        function brushend() {
+            d3.event.target.clear();
+            d3.select(this).call(d3.event.target);
+            //return list selected items to VM
+            vm.selected_nodes(force.nodes().filter(function(d) { if (d.selected) return d }));
+            vm.doFacetSearch();
+        }
 
         function updateWindow(){
             w = window.innerWidth || window.documentElement.clientWidth || window.getElementsByTagName('body')[0].clientWidth;
             h = window.innerHeight|| window.documentElement.clientHeight|| window.getElementsByTagName('body')[0].clientHeight;
-            svg.attr("width", w).attr("height", h);
+            x.domain([0, w]);
+            y.domain([0, h]); //reset the domains for the selectionbox
+            svg.attr("width", w).attr("height", h); //reset the main svg
         }
 
         function zoomed() {
@@ -176,7 +143,7 @@ function NodeViewer(vm){
         			.classed("ping", true)
         			.attr("cx", function(d) { return d.x; })
         			.attr("cy", function(d) { return d.y; })
-        			.attr("r", 15);
+        			.attr("r", 20);
         		pings.transition().duration(600)
         			.ease("quad-out")
         			.attr("r", 60)
@@ -189,7 +156,7 @@ function NodeViewer(vm){
 
         function stroke_width(d){
             if (vm.links_same_size()){
-                return 5;
+                return vm.links_width();
             }
             else {
                 return Math.max(d.score, 1.0);
@@ -198,7 +165,7 @@ function NodeViewer(vm){
     
         function node_size(d){
             if (vm.nodes_same_size()){
-                return 14;
+                return vm.nodes_size();
             }
             else {
                 return Math.min(Math.max(Math.sqrt(d.text_length * 3), 15), vm.max_nodes_size()) || 12;
@@ -225,7 +192,7 @@ function NodeViewer(vm){
         }
 
         function update() {
-
+            
             var graph = vm.network_graph();
 
             // Restart the force layout.
@@ -304,11 +271,13 @@ function NodeViewer(vm){
                 .attr("class", function(d) {
                     return (d.subgenre ? "node " + d.subgenre[0].replace(" ", "_") : "node other");
                 }) //determine color based on genre
-                .on("dblclick", collect_neighbors)
+//                .on( "mousedown", left_click_node_wait)
+//                .on( "mouseup", left_click_node_wait)
+//                .on("dblclick", collect_neighbors)
                 .on("click", left_click_node_wait)
 //                .on("contextmenu", right_click_node)
-                .on("contextmenu", dragstop)
-                .on("dblclick", dragstop)
+                .on("contextmenu", context_menu)
+                .on("dblclick", dbl_click)
                 .call(force_drag);
                 
 //                .call(force_drag);
@@ -348,38 +317,14 @@ function NodeViewer(vm){
                         .ease("elastic")
                         .attr("r", node_size);
                 });
-        
-/*            // pin button
-            pin_button = pin_button.data(graph.nodes);
-
-            pin_button.exit().remove();
-
-            var pin_buttonEnter = pin_button.enter().append("g")
-                .attr("class", "pin_button")
-                .on("contextmenu", dragstop)
-                .on("dblclick", dragstop)
-                .call(force_drag);
-
-            pin_buttonEnter.append("circle")
-                .attr("r", function(d) { return 8; });
-
-            pin_buttonEnter.append("text")
-                .attr("dy", ".3em")
-                .text(function(d) { return "!"; });
-
-            pin_button.select("circle")
-                .style("fill", color);
-*/
+                
+                  
 //#########################################################
 
             force.on("tick", function() {
 
                 node.attr("transform", function(d) { 
                     return "translate(" + Math.max(0, Math.min(w, d.x)) + "," + Math.max(20, Math.min(h, d.y)) + ")"; });
-
-                pin_button.attr("transform", function(d) {
-//                    var outer = Math.min(Math.max(Math.sqrt(d.text_length * 3), 15), vm.max_nodes_size()) || 12
-                    return "translate(" + Math.max(0, Math.min(w, d.x)) + "," + (Math.max(20, Math.min(h, d.y)) - (node_size(d))) + ")"; });
 
                 link.attr("x1", function(d) { return Math.max(0, Math.min(w, d.source.x)); })
                     .attr("y1", function(d) { return Math.max(20, Math.min(h, d.source.y)); })
@@ -438,7 +383,7 @@ function NodeViewer(vm){
             pinging_link[0] = item_data
             ping_link();
             
-            var list = d3.select("#linkDetailList");
+            var list = d3.select("#tabs-1");
             
             list.selectAll("li").remove();
             
@@ -446,9 +391,8 @@ function NodeViewer(vm){
                 .attr("class", "linkTypeLabel")
                 .html("<b>Score:</b> " + item_data.score);
             
-//            for (meta in vm.metadatas_to_query()){
             $.each(vm.metadatas_to_query(), function(metaindex, metavalue){
-                even = !even
+                even = !even;
                 var print_this = [];
                 if ((item_data["source"][metavalue.key]) || (item_data["target"][metavalue.key])){
                     same = [];
@@ -478,33 +422,17 @@ function NodeViewer(vm){
                     }
                     print_this = "<b>" + metavalue.key + ":</b>"
                     if (same.length > 0){   print_this += " <p style=\"color:green\">" + same.join(" | ") + "</p><hr>"; }
-                    if (source.length > 0){ print_this += "<p style=\"color:darkred\">" + source.join(" | ") + "</p>"; }
-                    if (target.length > 0){ print_this += "<hr><p style=\"color:darkred\">" + target.join(" | ") + "</p><hr>"; }
+                    if (source.length > 0){ print_this += "<p style=\"color:red\">" + source.join(" | ") + "</p>"; }
+                    if (target.length > 0){ print_this += "<hr><p style=\"color:red\">" + target.join(" | ") + "</p><hr>"; }
                     list.append("li")
                         .attr("class", "linkTypeLabel")
-/*                        .style("background-color", function(){
-                            if (even) { return "white"; }
-                            else { return "lightgray"; }
-                        })*/
                         .html(print_this);
                 }
             });
-//            update();
         }
 
-
-        function left_click_node_wait(item_data){
-            setTimeout(function(){
-//                d3.event.preventDefault();
-                left_click_node(item_data)
-            }, 300);
-        }
-        
-        
         // Toggle children on click.
         function left_click_node(item_data) {
-//            d3.event.preventDefault();
-//            console.log(item_data);
 
             pinging_link = [];
             pinging = [];
@@ -512,13 +440,7 @@ function NodeViewer(vm){
             
             ping();
             
-//            pinging.push(item_data);
-/*            if (pinging.length > 1) {
-                pinging.shift();
-                ping();
-            }
-*/
-            var list = d3.select("#linkDetailList");
+            var list = d3.select("#tabs-1");
             
             list.selectAll("li").remove();
 
@@ -553,17 +475,41 @@ function NodeViewer(vm){
                     })
                     .html(print_this);
             }
-//            d3.select(this).classed("fixed", item_data.fixed = false);
-//            update();
         }
 
-        function dragstop(d) {
+        function left_click_node_wait(d){
+            if (d3.event.defaultPrevented) return; // click suppressed
+            console.log("clicked!");
+            console.log(d.fixed);
+            if (d.fixed) {
+                d3.select(this).classed("fixed", d.fixed = false);
+            }
+            else d3.select(this).classed("fixed", d.fixed = true);
+            if (shiftKey){
+                d3.select(this).classed("selected", d.selected = !d.selected);
+                d3.select(this).classed("fixed", d.fixed = false);
+            }
+            else node.classed("selected", function(p) { return p.selected = d === p; });
+            
+            setTimeout(function(){
+                left_click_node(d)
+            }, 300);
+        }
+
+        function dbl_click(d) {
+            console.log("dblclick");
+            d3.event.preventDefault();
+//            d3.select(this).classed("fixed", d.fixed = false);
+        }
+
+        function context_menu(d) {
             d3.event.preventDefault();
             d3.select(this).classed("fixed", d.fixed = false);
         }
 
         function dragstart(d) {
-//            if (d3.event.defaultPrevented) return;
+//            d3.event.preventDefault();
+            console.log("dragstart");
             d3.select(this).classed("fixed", d.fixed = true);
         }
 
@@ -603,27 +549,6 @@ function NodeViewer(vm){
         }
 
 
-        function setLegendListOLD() {
-            var llist = d3.select("#legendList");
-            llist.selectAll("li").remove();
-            for (c in vm.subgenre_colors()){
-                llist.append("li")
-                    .attr("class", "linkTypeLabel")
-                    .style("background-color", vm.subgenre_colors()[c])
-                    .html("<b>" + c + "</b>")
-                    .on("mouseover", function(){
-                        console.log("mouse over legend " + c);
-                        d3.selectAll("." + c)
-                            .transition()
-                            .ease("elastic")
-                            .attr("r", 100)
-                            .attr("stroke-width", 10);
-                        })
-                    .on("mouseout", function(d){
-                    });
-            }
-        }
-
         vm.node_params.subscribe( function(){
             force.linkDistance(vm.node_params()["linkDistance"].value())
 //                .(vm.node_params()["linkStrength"].value())
@@ -634,6 +559,7 @@ function NodeViewer(vm){
                 .theta(vm.node_params()["theta"].value())
                 .size([w, h]);
             force.start();
+            
         });
 
         vm.link_colors_by_score_strength.subscribe( function (){
@@ -655,7 +581,15 @@ function NodeViewer(vm){
         vm.title_in_node.subscribe( function (){
             update();
         });
-        
+
+        vm.nodes_size.subscribe( function (){
+            update();
+        });
+
+        vm.links_width.subscribe( function (){
+            update();
+        });
+
 
     }
 }

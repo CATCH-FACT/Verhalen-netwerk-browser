@@ -35,7 +35,9 @@ window.onload = function () {
 
     var menuman = new MenuViewer(vm);
     menuman.init();
-    
+
+    var pieman = new PieViewer(vm);
+    pieman.init();
 
     if (getUrlParameter("minscore")){
         console.log("MINSCORE::::");
@@ -125,7 +127,7 @@ var metadatas_to_query = [  {key: "title",          score_value: 1,     selected
                             {key: "text",           score_value: 1,     selected: false}
                         ];
 
-var metadatas_to_show = ["identifier", "title","subject","creator",
+var metadatas_to_show = ["identifier", "title", "item_type", "subject","creator",
                         "contributor","type","language","date","collector",
                         "subgenre","motif","literary","extreme",
                         "named_entity","named_entity_location","place_of_action",
@@ -173,7 +175,6 @@ var network_links = [];
 var network_special_links = [];
 
 var interconnect_minimum_score = 2; //solr score
-var nodes_size = 15;
 var max_nodes_size = 30;
 
 var max_neighbor_results = 25;
@@ -181,7 +182,10 @@ var min_neighbor_score = 3.2;
 
 //some view settings
 var links_same_size = false;
+var links_width = 5;
+
 var nodes_same_size = false;
+var nodes_size = 15;
 
 var title_in_node = true;
 var show_dragbubbles = true;
@@ -195,7 +199,7 @@ var node_params = {
     linkStrength: { min: 0, max: 1, step: 0.05, value: 1 },
     gravity: { min: -0.0, max: 0.8, step: 0.01, value: 0.2 },
     friction: { min: 0, max: 1, step: 0.05, value: 0.8 },
-    theta: { min: 0, max: 1, step: 0.05, value: 0.5 }
+    theta: { min: 0, max: 1, step: 0.05, value: 0.5 },
 };
 
 function ViewModel() {
@@ -214,7 +218,7 @@ function ViewModel() {
 
     self.title_in_node = ko.observable(title_in_node);
     self.show_dragbubbles = ko.observable(show_dragbubbles);
-
+    self.links_width = ko.observable(links_width);
     self.nodes_size = ko.observable(nodes_size);
     self.max_nodes_size = ko.observable(max_nodes_size);
 
@@ -247,6 +251,7 @@ function ViewModel() {
     self.subgenre_colors = ko.observable(subgenre_colors);
 
     //observable arrays for containing search/browse results
+    self.facets_results = ko.observableArray([]);
     self.id_search_result = ko.observableArray([]);
     self.neighbor_search_results = ko.observableArray([]);
     self.build_tree = ko.observableArray([]);
@@ -256,9 +261,6 @@ function ViewModel() {
 
     //keeping track of selected objects
     self.selected_nodes = ko.observableArray([]);
-    self.pinned_nodes = ko.observableArray([]);
-    self.expanded_nodes = ko.observableArray([]);
-    self.collapsed_nodes = ko.observableArray([]);
     
     //queries
     self.vb_search_link = ko.observable(vb_search_link);
@@ -351,7 +353,6 @@ function ViewModel() {
         self.doIdSearch();
     };
 
-
     self.doIdSearch = function () {
         self.clearData();
         ids = self.id_search_query().split(/,[ \n]*/);
@@ -359,6 +360,21 @@ function ViewModel() {
             UpdateNetworkData(id_search_proxy + ids[id], true, self);
         }
     };
+
+    self.doFacetSearch = function (){
+        facet_query = "";
+        var or = "";
+        if (self.selected_nodes()){
+                $.each(self.selected_nodes(), function(index, value) {
+                    console.log(value.id);
+                    facet_query += or + "id" + ":\"" + value.id + "\"";
+                });
+                or = " OR ";
+        }
+        total_facet_query = facet_proxy + facet_query + facet_addition;
+        console.log(total_facet_query);
+        UpdateFacetData(total_facet_query, self);
+    }
 
     self.doIdAdd = function () {
         console.log("searching id number");
@@ -386,7 +402,6 @@ function ViewModel() {
         if (event.keyCode == 13) self.doSolrSearch();
         return true;
     };
-
 
     self.searchKeyboardCmd = function (data, event) {
         if (event.keyCode == 13) self.doIdSearch();
@@ -785,6 +800,32 @@ function ConnectNeighborsEXPENSIVE(vm){
     vm.network_graph(existing_network_graph);
 }
 
+function d3_format_facets(raw_facets){
+    var formatted_facets = {}
+    for(var index in raw_facets) { 
+        var attr = raw_facets[index];
+        var list = {};
+        for (var val in raw_facets[index]){
+            if (typeof attr[val] == "string"){
+                list[attr[val]] = attr[parseInt(val) + 1];
+            }
+        }
+        formatted_facets[index] = d3.entries(list);
+    }
+    return d3.entries(formatted_facets);
+}
+
+
+function UpdateFacetData(facet_query, vm){
+//    console.log(facet_query);
+    $.getJSON(facet_query, function(response) {
+//        var this_facets_results = vm.facets_results;
+        formatted_response = d3_format_facets(response.facet_counts.facet_fields);
+        vm.facets_results(formatted_response);
+        vm.facets_results.valueHasMutated();
+    });
+}
+
 function UpdateNetworkData(command, add, vm){
     n_n_depth = 0;
     console.log(command);
@@ -824,10 +865,15 @@ function MenuViewer(vm){
 
     this.init = function(){
         $(function() {
+          $( "#tabs" ).tabs();
+        });
+        
+        $(function() {
             $( "#accordion" ).accordion({
                 heightStyle: "fill"
             });
         });
+        
         $(function() {
             $( "#accordion-resizer" ).resizable({
                 grid: 50,
@@ -836,6 +882,7 @@ function MenuViewer(vm){
                 }
             });
         });
+        
         $(function() {
             $( "#slider" ).slider();
         });

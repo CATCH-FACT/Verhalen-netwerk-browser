@@ -6,6 +6,7 @@
         <script type="text/javascript" src="js/jquery-ui.min.js"></script>
         <script type="text/javascript" src="js/knockout-3.1.0.js"></script>
         <script type="text/javascript" src="js/expandable_nodes.js"></script>
+        <script type="text/javascript" src="js/dynamic_pie_charts.js"></script>
         <script type="text/javascript" src="js/main.js"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css" media="all"/>
         <link rel="stylesheet" type="text/css" href="css/jquery-ui.min.css" media="all"/>
@@ -74,7 +75,9 @@
                     <h4>Simple options</h4>
                     <label><input type="checkbox" data-bind="checked: link_colors_by_score_strength" />Links based on color</label><br>
                     <label><input type="checkbox" data-bind="checked: links_same_size" />Links all same size</label><br>
+                    <div data-bind="slider: links_width, sliderOptions: {min: 1, max: 15, range: 'min', step: 1}"></div>
                     <label><input type="checkbox" data-bind="checked: nodes_same_size" />Nodes all same size</label><br>
+                    <div data-bind="slider: nodes_size, sliderOptions: {min: 1, max: 25, range: 'min', step: 1}"></div>
                     <br>
                     <br>
                     <label><input type="checkbox" data-bind="checked: title_in_node" />Title in node</label><br>
@@ -91,8 +94,8 @@
                       <li>linkStrength(<span class="value">1</span>)<div id="linkStrength"></div></li>
                       <li>friction(<span class="value">0.5</span>)<div id="friction"></div></li>
                       <li>theta(<span class="value">0.3</span>)<div id="theta"></div></li>
+                      <br>
                     </ul>
-                    
                     <br>
                     <br>
                 </div>
@@ -109,6 +112,21 @@
             </div>
         </div>
 
-        <div id="linkDetailList"></div>
+        <div id="tabs">
+            <ul>
+              <li><a href="#tabs-1">Details</a></li>
+              <li><a href="#tabs-2">Facets</a></li>
+            </ul>
+            <div id="tabs-1">
+            </div>
+            <div id="tabs-2">
+                <div class="div_RootBody" id="pie_chart_2">
+                    <div class="chart"></div>
+                </div>
+            </div>
+
+        </div>
+
+
     </body>
 </html>
