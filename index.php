@@ -57,6 +57,7 @@
                     <br>
                     <br>
                     <button id="kill_lonely" data-bind="click:killLonelyNodes">Remove lonely nodes</button>
+                    <button id="kill_selected" data-bind="click:killSelectedNodes">Remove selected nodes</button>
                 </div>
                 
                 <h3>Metadata list</h3>

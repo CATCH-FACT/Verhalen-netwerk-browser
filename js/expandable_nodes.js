@@ -197,6 +197,11 @@ function NodeViewer(vm){
             //retrieve possible values of metadata field from solr database
             //build new color index
 
+            if (vm.selectedLegendOptionValue() == "type"){
+                if (d.type){
+                    return type_colors[d.type];
+                }
+            }
             if (vm.selectedLegendOptionValue() == "literary"){
                 if (d.literary){
                     return literary_colors[d.literary];

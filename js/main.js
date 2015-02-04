@@ -140,6 +140,20 @@ var metadatas_to_show = ["identifier", "title", "item_type", "subject",
                         "corpus","text_length","text_length_group", "locality", "description", "text"];
 
 
+function array_color_generator(arr){
+    scale_one = d3.scale.category10();
+    console.log("scale one:")
+    console.log(scale_one(0));
+    group_colors = {};
+    i = 0;
+    for (param in arr){
+        i++;
+        group_colors[arr[param]] = scale_one(i);
+    };
+    return group_colors;
+}
+
+//Generate these
 text_length_group_colors = { "<25": "#E56717",
                     "25-100": "#FF7F50",
                     "100-250": "#E55451",
@@ -161,6 +175,28 @@ language_colors = { "Standaardnederlands": "#00BFFF",
                     "other": "#FF0000",
                     "personal": "#FF00FF",
                     "none": "#FFFFE0"};
+
+types = ["almanak",
+        "artikel",
+        "boek",
+        "brief",
+        "cd",
+        "centsprent",
+        "drama",
+        "e-mail",
+        "fax",
+        "handschrift",
+        "internet",
+        "kluchtboek",
+        "krant",
+        "lp",
+        "mondeling",
+        "televisie",
+        "vragenlijst",
+        "informatiebord"];
+
+type_colors = array_color_generator(types);
+console.log(type_colors);
 
 subgenre_colors = { "broodjeaapverhaal": "#00BFFF",
                     "sprookje": "#DAA520",
@@ -331,6 +367,10 @@ function ViewModel() {
         self.facet_query = facet_proxy + self.initial_facet_query();
     };
 
+    self.killSelectedNodes = function(){
+        RemoveSelectedNodes(self); //moeilijke klus.
+    }
+
     self.killLonelyNodes = function(){
         RemoveLonelyNodes(self); //moeilijke klus.
     }
@@ -380,8 +420,7 @@ function ViewModel() {
         var return_fields = "fl=id,identifier";
         
         get_id_list_command = solr_search_proxy + self.solr_search_command() + "&" + collection + "&" + return_fields;
-        
-        console.log(get_id_list_command);
+//        console.log(get_id_list_command);
         
         search_these = get_solr_id_list(get_id_list_command);
         self.id_search_query(search_these);
@@ -402,13 +441,13 @@ function ViewModel() {
         var or = "";
         if (self.selected_nodes()){
                 $.each(self.selected_nodes(), function(index, value) {
-                    console.log(value.id);
+//                    console.log(value.id);
                     facet_query += or + "id" + ":\"" + value.id + "\"";
                 });
                 or = " OR ";
         }
         total_facet_query = facet_proxy + facet_query + facet_addition;
-        console.log(total_facet_query);
+//        console.log(total_facet_query);
         UpdateFacetData(total_facet_query, self);
     }
 
@@ -761,6 +800,47 @@ function RemoveLonelyNodes(vm){
     
 }
 
+function RemoveSelectedNodes(vm){
+    existing_network_graph = vm.network_graph();
+    selected_nodes = vm.selected_nodes();
+    //first identify:
+    console.log(existing_network_graph);
+    for (var q = 0; q < selected_nodes.length; q++) { //not surewhy, but this has to be repeated a bunch of times
+        for (var i = 0; i < existing_network_graph.nodes.length; i++) {
+            for (var j = 0; j < selected_nodes.length; j++) {
+                if (selected_nodes[j] == existing_network_graph.nodes[i])
+                    existing_network_graph.nodes.splice(i, 1);
+            }
+        }
+        for (var i = 0; i < existing_network_graph.links.length; i++) {    
+            for (var j = 0; j < selected_nodes.length; j++) {
+                if (selected_nodes[j] == existing_network_graph.links[i].source)
+                    existing_network_graph.links.splice(i, 1);
+            }
+        }
+        for (var i = 0; i < existing_network_graph.links.length; i++) {    
+            for (var j = 0; j < selected_nodes.length; j++) {
+                if (selected_nodes[j] == existing_network_graph.links[i].target)
+                    existing_network_graph.links.splice(i, 1);
+            }
+        }
+    }
+
+    //reset the node_ids?
+    for (var i = 0; i < existing_network_graph.nodes.length; i++) {
+        existing_network_graph.nodes[i].node_id = i;
+    }
+    //remove unconnected links
+    
+    
+    vm.network_graph(existing_network_graph);
+    vm.network_graph.valueHasMutated();
+}
+
+function remove_unconnected_links(){
+    
+}
+
 function returnNodeIds(nodes){
     node_ids = [];
     for (node in nodes){
@@ -865,7 +945,7 @@ function UpdateFacetData(facet_query, vm){
 
 function UpdateNetworkData(command, add, vm){
     n_n_depth = 0;
-    console.log(command);
+//    console.log(command);
     var existing_network_graph = vm.network_graph();
     $.getJSON(command, function(response) {
         pre_node = response.response.docs[0];
@@ -882,7 +962,7 @@ function UpdateNetworkData(command, add, vm){
             vm.network_graph(base_node);
         }
         vm.network_graph.valueHasMutated();
-        console.log("created root node network");
+//        console.log("created root node network");
     });
 }
 
