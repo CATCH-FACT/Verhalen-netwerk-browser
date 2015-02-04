@@ -91,7 +91,11 @@ var id_search_proxy = 'data_proxy.php?i&q=';
 var neighbor_search_proxy = 'data_proxy.php?ns&q=';
 var facet_proxy = 'data_proxy.php?f&q='
 
-var show_facets = ["subgenre", "type", "language", "tags", "collector", "creator", "subject", "literary", "extreme", "text_length_group", "named_entity", "administrative_area_level_1"]
+var show_facets = ["item_type", "subject",
+                    "collector", "creator", "date",
+                    "subgenre", "type", "language", "literary", "extreme",
+                    "tags", "named_entity","named_entity_location", "place_of_action", "motif", 
+                    "text_length_group", "locality", "administrative_area_level_1"];
 var facet_addition = "&facet=true&facet.mincount=1&wt=json&rows=0&facet.field=" + show_facets.join("&facet.field=")
 
 var metadatas_to_query = [  {key: "title",          score_value: 1,     selected: true},
@@ -127,13 +131,36 @@ var metadatas_to_query = [  {key: "title",          score_value: 1,     selected
                             {key: "text",           score_value: 1,     selected: false}
                         ];
 
-var metadatas_to_show = ["identifier", "title", "item_type", "subject","creator",
-                        "contributor","type","language","date","collector",
-                        "subgenre","motif","literary","extreme",
-                        "named_entity","named_entity_location","place_of_action",
-                        "corpus","text_length","text_length_group","tags", "locality", "description", "text"];
+
+//"#E56717", "#E66C2C", "#F87217", "#F87431", "#E67451", "#FF8040", "#F88017", "#FF7F50", "#F88158", "#F9966B"
+var metadatas_to_show = ["identifier", "title", "item_type", "subject",
+                        "collector", "creator", "contributor", "date",
+                        "subgenre", "type", "language", "literary", "extreme",
+                        "tags", "named_entity","named_entity_location","place_of_action", "motif", 
+                        "corpus","text_length","text_length_group", "locality", "description", "text"];
 
 
+text_length_group_colors = { "<25": "#E56717",
+                    "25-100": "#FF7F50",
+                    "100-250": "#E55451",
+                    "250-500": "#E42217",
+                    "500-1000": "#9F000F",
+                    ">1000": "#800517"};
+
+language_colors = { "Standaardnederlands": "#00BFFF",
+                    "Fries": "#DAA520",
+                    "Gronings": "#7FFF00",
+                    "Drents": "#D2B48C",
+                    "Vlaams": "#556B2F",
+                    "personal_narrative": "#DA70D6",
+                    "legende": "#6A5ACD",
+                    "exempel": "#FFA500",
+                    "mythe": "#555555",
+                    "lied": "#FF00FF",
+                    "kwispel": "#FF0066",
+                    "other": "#FF0000",
+                    "personal": "#FF00FF",
+                    "none": "#FFFFE0"};
 
 subgenre_colors = { "broodjeaapverhaal": "#00BFFF",
                     "sprookje": "#DAA520",
@@ -146,8 +173,17 @@ subgenre_colors = { "broodjeaapverhaal": "#00BFFF",
                     "mythe": "#555555",
                     "lied": "#FF00FF",
                     "kwispel": "#FF0066",
-                    "other": "#FF0000", 
-                    "personal": "#FF0000", 
+                    "other": "#FF0000",
+                    "personal": "#FF00FF",
+                    "none": "#FFFFE0"};
+
+extreme_colors = { "ja": "#00BFFF",
+                    "nee": "#555555",
+                    "none": "#FFFFE0"};
+
+
+literary_colors = { "ja": "#00BFFF",
+                    "nee": "#555555",
                     "none": "#FFFFE0"};
 
 legendOptionValues = ["subgenre", "type", "language", "literary", "extreme", "text_length_group"];
@@ -510,7 +546,8 @@ function get_vb_id_list(vb_link){
                     for (i in response.items){
                         items_found++;
                         if (response.items[i].id){
-                            search_ids.push(response.items[i].id);
+                            setTimeout(search_ids.push(response.items[i].id),1000)
+//                            search_ids.push(response.items[i].id);
                         }
                     }
                 }
@@ -835,6 +872,9 @@ function UpdateNetworkData(command, add, vm){
         if (add && !inNodesList(pre_node, existing_network_graph.nodes)){
             pre_node["node_id"] = existing_network_graph.nodes.length; //extra id for flattening
             existing_network_graph.nodes.push(pre_node)
+        }
+        else if (add && inNodesList(pre_node, existing_network_graph.nodes)){
+            //do nothing
         }
         else{
             pre_node["node_id"] = 0; //extra id for flattening

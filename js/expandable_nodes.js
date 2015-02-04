@@ -112,7 +112,7 @@ function NodeViewer(vm){
         }
 
         function zoomed() {
-            vm.node_params()["gravity"].value(Math.min((d3.event.scale + 600)/4000), 0.2);
+            vm.node_params()["gravity"].value(Math.min((d3.event.scale + 600)/6000), 0.2);
             vm.node_params()["charge"].value(-(d3.event.scale));
             vm.node_params.valueHasMutated();
         }
@@ -168,11 +168,12 @@ function NodeViewer(vm){
                 return vm.nodes_size();
             }
             else {
-                return Math.min(Math.max(Math.sqrt(d.text_length * 3), 15), vm.max_nodes_size()) || 12;
+                return Math.min(Math.max(Math.sqrt(d.text_length * 2), 15), vm.max_nodes_size()) || 7;
             }
         }
         
-        function node_text(d) { 
+        function node_text(d) {
+            //make this react to metadata show choice in index
             if (vm.title_in_node()){
                 return d.identifier + (d.title ? ": " + d.title : ""); 
             }
@@ -189,6 +190,39 @@ function NodeViewer(vm){
                 color_return = "#9ecae1";
             }
             return color_return;
+        }
+
+        function node_color(d) {
+//            vm.selectedLegendOptionValue();
+            //retrieve possible values of metadata field from solr database
+            //build new color index
+
+            if (vm.selectedLegendOptionValue() == "literary"){
+                if (d.literary){
+                    return literary_colors[d.literary];
+                }
+            }
+            if (vm.selectedLegendOptionValue() == "extreme"){
+                if (d.extreme){
+                    return extreme_colors[d.extreme];
+                }
+            }
+            if (vm.selectedLegendOptionValue() == "subgenre"){
+                if (d.subgenre){
+                    return subgenre_colors[d.subgenre[0].replace(" ", "_")];
+                }
+            }
+            if (vm.selectedLegendOptionValue() == "language"){
+                if (d.language){
+                    return language_colors[d.language[0].replace(" ", "_")];
+                }
+            }
+            if (vm.selectedLegendOptionValue() == "text_length_group"){
+                if (d.text_length_group){
+                    return text_length_group_colors[d.text_length_group.replace(" ", "_")];
+                }
+            }
+            return subgenre_colors["none"]; //none
         }
 
         function update() {
@@ -267,7 +301,8 @@ function NodeViewer(vm){
                 .delay(1000)
                 .remove();
 
-            var nodeEnter = node.enter().append("g")
+            var nodeEnter = node.enter()
+                .append("g")
                 .attr("class", function(d) {
                     return (d.subgenre ? "node " + d.subgenre[0].replace(" ", "_") : "node other");
                 }) //determine color based on genre
@@ -282,7 +317,8 @@ function NodeViewer(vm){
                 
 //                .call(force_drag);
             
-            nodeEnter.append("circle")
+            nodeEnter
+                .append("circle")
                 .attr("r", node_size);
 
             nodeEnter.append("text")
@@ -302,7 +338,7 @@ function NodeViewer(vm){
                 .text(node_text); //html no function with transition?
             
             node.select("circle")
-                .style("fill", color)
+                .style("fill", node_color)
                 .on("mouseover", function(d){
                     d3.select(this)
                         .transition()
@@ -351,16 +387,6 @@ function NodeViewer(vm){
 //            console.log(d);
             vm.doNeighborSearch(d);
             // tell VM to retrieve more nodes to attach to the tree
-        }
-
-        function color(d) {
-//            vm.selectedLegendOptionValue();
-            //retrieve possible values of metadata field from solr database
-            //build new color index
-            if (d.subgenre){
-                return subgenre_colors[d.subgenre[0].replace(" ", "_")];
-            }
-            return subgenre_colors["none"]; //none
         }
 
         //removing links?
@@ -458,10 +484,14 @@ function NodeViewer(vm){
             var even = true;
 
             for (meta in vm.metadatas_to_show()){
+//            for (meta in item_data){
                 even = !even;
                 meta = vm.metadatas_to_show()[meta];
                 print_this = "";
-                if (item_data[meta] instanceof Array){
+                if (!item_data[meta]){
+                     print_this = "<b style='text-decoration: line-through;'>" + meta + "</b>";
+                }
+                else if (item_data[meta] instanceof Array){
                     print_this = "<b>" + meta + ":</b> " + item_data[meta].join(" | ");
                 }
                 else{
@@ -479,8 +509,6 @@ function NodeViewer(vm){
 
         function left_click_node_wait(d){
             if (d3.event.defaultPrevented) return; // click suppressed
-            console.log("clicked!");
-            console.log(d.fixed);
             if (d.fixed) {
                 d3.select(this).classed("fixed", d.fixed = false);
             }
@@ -493,7 +521,7 @@ function NodeViewer(vm){
             
             setTimeout(function(){
                 left_click_node(d)
-            }, 300);
+            }, 200);
         }
 
         function dbl_click(d) {
@@ -524,6 +552,8 @@ function NodeViewer(vm){
 
         function setLegendList() {
             console.log(vm.subgenre_colors());
+            
+            d3.select("#legendList").selectAll("li").remove();
             
             var list = d3.select("#legendList").selectAll("li")
                 .data(d3.entries(vm.subgenre_colors()))
@@ -590,6 +620,11 @@ function NodeViewer(vm){
             update();
         });
 
+        vm.selectedLegendOptionValue.subscribe( function (){
+            update();
+            setLegendList();
+        });
+        
 
     }
 }

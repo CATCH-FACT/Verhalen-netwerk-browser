@@ -1,6 +1,10 @@
 function PieViewer(vm){
 
-    colors = ["#E56717", "#E66C2C", "#F87217", "#F87431", "#E67451", "#FF8040", "#F88017", "#FF7F50", "#F88158", "#F9966B", "#E78A61", "#E18B6B", "#E77471", "#F75D59", "#E55451", "#E55B3C", "#FF0000", "#FF2400", "#F62217", "#F70D1A", "#F62817", "#E42217", "#E41B17", "#DC381F", "#C34A2C", "#C24641", "#C04000", "#C11B17", "#9F000F", "#990012", "#8C001A", "#954535", "#7E3517", "#8A4117", "#7E3817", "#800517"];
+    colors = [  "#E56717", "#E66C2C", "#F87217", "#F87431", "#E67451", "#FF8040", "#F88017", 
+                "#FF7F50", "#F88158", "#F9966B", "#E78A61", "#E18B6B", "#E77471", "#F75D59", 
+                "#E55451", "#E55B3C", "#FF0000", "#FF2400", "#F62217", "#F70D1A", "#F62817", 
+                "#E42217", "#E41B17", "#DC381F", "#C34A2C", "#C24641", "#C04000", "#C11B17", 
+                "#9F000F", "#990012", "#8C001A", "#954535", "#7E3517", "#8A4117", "#7E3817", "#800517"];
 
     function shuffle(o){ //v1.0
         for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
@@ -75,22 +79,21 @@ function drawPie( pieName, dataSet, selectString, colors, margin, outerRadius, i
         var colorScale = d3.scale.ordinal().range(colors);
     }
 
-
     var minimum_percentage = 4;
-    var canvasWidth = 600;
+    var canvasWidth = 350;
     var pieWidthTotal = outerRadius * 1.2;// * 2;
     var pieCenterX = outerRadius + margin/2;
     var pieCenterY = outerRadius + margin/2;
     var legendBulletOffset = 30;
     var legendVerticalOffset = outerRadius - margin;
     var legendTextOffset = 20;
-    var textVerticalSpace = 14;
+    var textVerticalSpace = 13;
 
     var canvasHeight = 0;
     var pieDrivenHeight = outerRadius*2 + margin*2;
-    var legendTextDrivenHeight = (10 * textVerticalSpace) + margin*2;
+    var legendTextDrivenHeight = (10 * textVerticalSpace);
 //    var legendTextDrivenHeight = (dataSet.length * textVerticalSpace) + margin*2;
-
+/*
     // Autoadjust Canvas Height
     if (pieDrivenHeight >= legendTextDrivenHeight){
         canvasHeight = pieDrivenHeight;
@@ -98,6 +101,8 @@ function drawPie( pieName, dataSet, selectString, colors, margin, outerRadius, i
     else{
         canvasHeight = legendTextDrivenHeight;
     }
+*/
+    canvasHeight = legendTextDrivenHeight;
 
     var x = d3.scale.linear().domain([0, d3.max(dataSet, function(d) { return d.value; })]).rangeRound([0, pieWidthTotal]);
     var y = d3.scale.linear().domain([0, dataSet.length]).range([0, (dataSet.length * 20)]);
@@ -267,11 +272,15 @@ function drawPie( pieName, dataSet, selectString, colors, margin, outerRadius, i
     canvas.append("svg:text") //add a title to the circle's center
         .attr("x", 0)
         .attr("y", 6)
-        .attr("text-anchor", "middle")  
-        .style("font-size", "16px") 
-        .style("font-weight", "bold")  
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .style("font-weight", "bold")
+        .style("fill", "black")
+//        "fill:none;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
+//        .style("fill", "none")
+//        .style("stroke-width", "0.5px")
+//        .style("stroke", "white")
         .text(pieName);
-//        .attr("transform", "rotate(10 20, 20)"); // Set center of pie;
 
     // Plot the bullet circles...
     var bullets = canvas.selectAll("circle")
