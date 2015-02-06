@@ -48,9 +48,12 @@
             $pre_query = mb_convert_encoding(replace_spaces_and_cancellations($query), "ISO-8859-1", mb_detect_encoding($query, "UTF-8, ISO-8859-1, ISO-8859-15", true));
             $settings = "wt=json";
             $settings .= "&rows=" . $limit; //ident=true off for faster results
-            $settings .= $field_query ? "&fq=" . $field_query : "";
+//            $settings .= $field_query ? "&fq=" . $field_query : "";
             $settings .= $return_fields ? "&fl=" . $return_fields : "";
             $total_query = $config['query_location'] . "?q=" . $pre_query . "&" . $return_fields . "&" . $settings;
+//            print "<br><br>";
+//            print $total_query;
+//            print "<br><br>";
         }
         else if (array_key_exists('f', $_GET)) { //facets
             $total_query = $config['query_location'] . "?" . $_SERVER["QUERY_STRING"];

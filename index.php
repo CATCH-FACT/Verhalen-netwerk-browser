@@ -19,9 +19,9 @@
         <div id="accordion-resizer" class="ui-widget-content">
             <div id="accordion">
                 
-                <h3>Search</h3>
+                <h3>Search & manipulation</h3>
                 <div class="search" id="search_container">
-                    <li>Identifier(s):</li>
+                    <h4>Identifier(s):</h4>
                     <input id="searchBox" class="input-search" data-bind="value:id_search_query, valueUpdate: 'afterkeydown', event: { keypress: searchKeyboardCmd}" style='width:98%'/>
                     <br>
                     <button class="search_button" data-bind="click:doIdSearch">Search</button>
@@ -43,12 +43,8 @@
                     <button class="solr_search_button" data-bind="click:doSolrSearch">Search</button>
                     <button class="solr_reset_button" data-bind="click:emptySolrSearchbox">Clear</button>
                     <br>
-                    <br>
                     <hr>
-                    <li>Node manipulation:</li>
-                    <button class="clear_button" data-bind="click:clearData">Remove all nodes</button>
-                    <br>
-                    <br>
+                    <h4>Node manipulation:</h4>
                     Minimum score: <input data-bind="value: min_neighbor_score, valueUpdate: 'afterkeydown'" />
                     <div data-bind="slider: min_neighbor_score, sliderOptions: {min: 1, max: 25, range: 'min', step: 0.1}"></div>
                     <br>
@@ -56,23 +52,10 @@
                     <button id="connect" data-bind="click:connectNeighbors">re-connect ALL nodes</button>
                     <br>
                     <br>
+                    <button class="clear_button" data-bind="click:clearData">Remove ALL nodes</button>
                     <button id="kill_lonely" data-bind="click:killLonelyNodes">Remove lonely nodes</button>
                     <button id="kill_selected" data-bind="click:killSelectedNodes">Remove selected nodes</button>
-                </div>
-                
-                <h3>Metadata list</h3>
-                <div class="control" id="viewSettings">
-                    <label style="text-color=red"><input type="checkbox" data-bind="checked: all_checked" />All</label>
-                    <div data-bind="foreach: metadatas_to_query">
-                        <input type="checkbox" data-bind="checked: selected" />
-                        <input data-bind="value: score_value, valueUpdate: 'afterkeydown', disable: !selected()" style='width:20px'/>
-                        <span data-bind="text: key, style: { color: selected() ? 'black' : 'lightgrey' }" /></span>
-                        <br>
-                    </div>
-                </div>
-
-                <h3>View options</h3>
-                <div class="control" id="viewSettings">
+                    <hr>                    
                     <h4>Simple options</h4>
                     <label><input type="checkbox" data-bind="checked: link_colors_by_score_strength" />Links based on color</label><br>
                     <label><input type="checkbox" data-bind="checked: links_same_size" />Links all same size</label><br>
@@ -101,10 +84,25 @@
                     <br>
                 </div>
                 
+                <h3>Metadata list</h3>
+                <div class="control" id="viewSettings">
+                    <label style="text-color=red"><input type="checkbox" data-bind="checked: all_checked" />All</label>
+                    <div data-bind="foreach: metadatas_to_query">
+                        <input type="checkbox" data-bind="checked: selected" />
+                        <input data-bind="value: score_value, valueUpdate: 'afterkeydown', disable: !selected()" style='width:20px'/>
+                        <span data-bind="text: key, style: { color: selected() ? 'black' : 'lightgrey' }" /></span>
+                        <br>
+                    </div>
+                </div>
+
                 <h3>Color legend</h3>
                 <div id="legendList">
-                    <select data-bind="options: legendOptionValues, value: selectedLegendOptionValue"></select>
-                    <span data-bind="text: selectedLegendOptionValue" /></span>
+                    <select size=5 style="width:100%" data-bind="options: legendOptionValues, value: selectedLegendOptionValue"></select>
+                    <br>
+                </div>
+
+                <h3>Download data</h3>
+                <div class="control" id="viewSettings">
                 </div>
                 
                 <h3>Help and info</h3>
@@ -128,6 +126,6 @@
 
         </div>
 
-
+        <center><span data-bind="text: total_nodes"></span>
     </body>
 </html>

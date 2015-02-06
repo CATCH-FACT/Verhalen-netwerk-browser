@@ -34,7 +34,6 @@ function NodeViewer(vm){
 
 
         var x = d3.scale.identity().domain([0, w])
-
         var y = d3.scale.identity().domain([0, h])
 
         var brush = d3.svg.brush()
@@ -159,7 +158,7 @@ function NodeViewer(vm){
                 return vm.links_width();
             }
             else {
-                return Math.max(d.score, 1.0);
+                return (vm.links_width()/10) * Math.max(d.score, 1.0) || 3;
             }
         }
     
@@ -168,14 +167,50 @@ function NodeViewer(vm){
                 return vm.nodes_size();
             }
             else {
-                return Math.min(Math.max(Math.sqrt(d.text_length * 2), 15), vm.max_nodes_size()) || 7;
+                return (vm.nodes_size()/10) * Math.min(Math.max(Math.sqrt(d.text_length), 10), vm.max_nodes_size()) || 5;
             }
+        }
+
+        function node_size_mouse_over(d){
+            if (vm.nodes_same_size()){
+                return vm.nodes_size();
+            }
+            else {
+                return (vm.nodes_size()/8) * Math.min(Math.max(Math.sqrt(d.text_length), 15), vm.max_nodes_size()) || 12;
+            }
+        }
+
+        function node_class(d) {
+            var re = /[ \(\)\<\>?\.,-]/g;
+            if (vm.selectedLegendOptionValue() == "subgenre"){
+                return (d.subgenre ? "node " + legend_colors[vm.selectedLegendOptionValue()][d.subgenre].class_code : "node other");
+//                return (d.subgenre ? "node " + d.subgenre[0].replace(re, "_") : "node other");
+            }
+            else if (vm.selectedLegendOptionValue() == "type"){
+                return (d.type ? "node " + legend_colors[vm.selectedLegendOptionValue()][d.type[0]].class_code : "node other");
+            }
+            else if (vm.selectedLegendOptionValue() == "item_type"){
+                return (d.item_type ? "node " + legend_colors[vm.selectedLegendOptionValue()][d.item_type].class_code : "node other");
+            }
+            else if (vm.selectedLegendOptionValue() == "literary"){
+                return (d.literary ? "node " + legend_colors[vm.selectedLegendOptionValue()][d.literary].class_code : "node other");
+            }
+            else if (vm.selectedLegendOptionValue() == "extreme"){
+                return (d.extreme ? "node " + legend_colors[vm.selectedLegendOptionValue()][d.extreme].class_code : "node other");
+            }
+            else if (vm.selectedLegendOptionValue() == "language"){
+                return (d.language ? "node " + legend_colors[vm.selectedLegendOptionValue()][d.language[0]].class_code : "node other");
+            }
+            else if (vm.selectedLegendOptionValue() == "text_length_group"){
+                return (d.text_length_group ? "node " + legend_colors[vm.selectedLegendOptionValue()][d.text_length_group].class_code : "node other");
+            }
+            else return "node other"; //none
         }
         
         function node_text(d) {
             //make this react to metadata show choice in index
             if (vm.title_in_node()){
-                return d.identifier + (d.title ? ": " + d.title : ""); 
+                return (d.identifier ? d.identifier + ": " : "") + (d.title ? d.title : ""); 
             }
             else{
                 return "";
@@ -193,38 +228,42 @@ function NodeViewer(vm){
         }
 
         function node_color(d) {
-//            vm.selectedLegendOptionValue();
-            //retrieve possible values of metadata field from solr database
-            //build new color index
-
+            var re = /[ \(\)\<\>?\.,-]/g;
+            if (vm.selectedLegendOptionValue() == "subgenre"){
+                if (d.subgenre){
+//                    console.log(legend_colors[vm.selectedLegendOptionValue()][d.subgenre]);
+                    return legend_colors[vm.selectedLegendOptionValue()][d.subgenre].color;
+                }
+            }
             if (vm.selectedLegendOptionValue() == "type"){
                 if (d.type){
-                    return type_colors[d.type];
+                    return legend_colors[vm.selectedLegendOptionValue()][d.type].color;
+                }
+            }
+            if (vm.selectedLegendOptionValue() == "item_type"){
+                if (d.item_type){
+                    console.log(d.item_type);
+                    return legend_colors[vm.selectedLegendOptionValue()][d.item_type].color;
                 }
             }
             if (vm.selectedLegendOptionValue() == "literary"){
                 if (d.literary){
-                    return literary_colors[d.literary];
+                    return legend_colors[vm.selectedLegendOptionValue()][d.literary].color;
                 }
             }
             if (vm.selectedLegendOptionValue() == "extreme"){
                 if (d.extreme){
-                    return extreme_colors[d.extreme];
-                }
-            }
-            if (vm.selectedLegendOptionValue() == "subgenre"){
-                if (d.subgenre){
-                    return subgenre_colors[d.subgenre[0].replace(" ", "_")];
+                    return legend_colors[vm.selectedLegendOptionValue()][d.extreme].color;
                 }
             }
             if (vm.selectedLegendOptionValue() == "language"){
                 if (d.language){
-                    return language_colors[d.language[0].replace(" ", "_")];
+                    return legend_colors[vm.selectedLegendOptionValue()][d.language[0]].color;
                 }
             }
             if (vm.selectedLegendOptionValue() == "text_length_group"){
                 if (d.text_length_group){
-                    return text_length_group_colors[d.text_length_group.replace(" ", "_")];
+                    return legend_colors[vm.selectedLegendOptionValue()][d.text_length_group].color;
                 }
             }
             return subgenre_colors["none"]; //none
@@ -308,9 +347,7 @@ function NodeViewer(vm){
 
             var nodeEnter = node.enter()
                 .append("g")
-                .attr("class", function(d) {
-                    return (d.subgenre ? "node " + d.subgenre[0].replace(" ", "_") : "node other");
-                }) //determine color based on genre
+                .attr("class", node_class) //determine color based on genre
 //                .on( "mousedown", left_click_node_wait)
 //                .on( "mouseup", left_click_node_wait)
 //                .on("dblclick", collect_neighbors)
@@ -332,9 +369,7 @@ function NodeViewer(vm){
 //                .html(function(d) { return d.identifier + (d.title ? ": " + d.title : ""); });
             
             node.transition()
-                .attr("class", function(d) {
-                    return (d.subgenre ? "node " + d.subgenre[0].replace(" ", "_") : "node other");
-                }) //determine color based on genre
+                .attr("class", node_class);
             
             node.select("circle").transition()
                 .attr("r", node_size);
@@ -348,9 +383,7 @@ function NodeViewer(vm){
                     d3.select(this)
                         .transition()
                         .ease("elastic")
-                        .attr("r", function(d) { 
-                            return Math.min(Math.max(Math.sqrt(d.text_length * 5), 18), vm.max_nodes_size()) || 15; ;
-                        });
+                        .attr("r", node_size_mouse_over);
                 })
                 .on("mouseout", function(d){
                     d3.select(this)
@@ -556,30 +589,31 @@ function NodeViewer(vm){
         }
 
         function setLegendList() {
-            console.log(vm.subgenre_colors());
-            
             d3.select("#legendList").selectAll("li").remove();
             
             var list = d3.select("#legendList").selectAll("li")
-                .data(d3.entries(vm.subgenre_colors()))
+                .data(d3.entries(vm.legend_colors()[vm.selectedLegendOptionValue()]))
                 .enter().append("li")
-                .style("background-color", function(d) { 
-                    return d.value;
+                .style("background-color", function(d) {
+                    return d.value.color;
                 })
                 .html(function(d) { 
                     return "<b>" + d.key + "</b>";
                 })
                 .on("mouseover", function(d){
-                    d3.selectAll("." + d.key).select("circle")
+                    d3.selectAll("." + legend_colors[vm.selectedLegendOptionValue()][d.key].class_code).select("circle")
+//                    d3.selectAll("." + d.key.replace(re, "_")).select("circle")
                         .transition()
                         .ease("elastic")
-                        .style("stroke-width", 8) 
+                        .style("stroke-width", 8)
+                        .style("stroke", "#64FE2E");
                 })
                 .on("mouseout", function(d){
-                    d3.selectAll("." + d.key).select("circle")
+                    d3.selectAll("." + legend_colors[vm.selectedLegendOptionValue()][d.key].class_code).select("circle")
                         .transition()
                         .ease("elastic")
-                        .style("stroke-width", 1.5) 
+                        .style("stroke-width", 1.5)
+                        .style("stroke", null);
                 });
         }
 

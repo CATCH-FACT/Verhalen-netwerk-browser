@@ -64,6 +64,12 @@ p {
     stroke-dasharray: 0; 
 }
 
+.other{
+    fill: #666666;
+    fill-opacity: .75;
+    stroke: #000000;
+}
+
 .fixed circle{
     stroke-dasharray: 5,5; 
     stroke-width: 5px;

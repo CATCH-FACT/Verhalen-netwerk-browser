@@ -40,8 +40,6 @@ window.onload = function () {
     pieman.init();
 
     if (getUrlParameter("minscore")){
-        console.log("MINSCORE::::");
-        console.log(getUrlParameter("minscore"));
         vm.min_neighbor_score(getUrlParameter("minscore"));
     }
 
@@ -51,7 +49,6 @@ window.onload = function () {
     }
 
     if (getUrlParameter("solr")){
-        console.log(getUrlParameter("solr"));
         vm.solr_search_command(getUrlParameter("solr"));
         vm.doSolrSearch();
     }
@@ -139,42 +136,196 @@ var metadatas_to_show = ["identifier", "title", "item_type", "subject",
                         "tags", "named_entity","named_entity_location","place_of_action", "motif", 
                         "corpus","text_length","text_length_group", "locality", "description", "text"];
 
+function makeid(n){
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    for( var i=0; i < n; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    return text;
+}
+
+function array_color_generator_darker(arrr, base_color){
+    var re = /[ \(\)\<\>?\.,-]/g;
+    color = d3.rgb(base_color);
+    group_colors = {};
+    for (param in arrr){
+        group_colors[arrr[param]] = {class_code: makeid(8), color: color.toString()};
+        color = color.darker(0.5);
+    }
+    return group_colors;
+}
 
 function array_color_generator(arr){
-    scale_one = d3.scale.category10();
-    console.log("scale one:")
-    console.log(scale_one(0));
+    scale_one = d3.scale.category20();
     group_colors = {};
     i = 0;
     for (param in arr){
         i++;
-        group_colors[arr[param]] = scale_one(i);
+        if (i>=38){
+            group_colors[arr[param]] = {class_code: makeid(8), color: d3.rgb(scale_one(i)).darker().toString()};
+        }
+        else if (i>=19){
+            group_colors[arr[param]] = {class_code: makeid(8), color: d3.rgb(scale_one(i)).brighter().toString()};
+        }
+        else{
+            group_colors[arr[param]] = {class_code: makeid(8), color: d3.rgb(scale_one(i)).toString()};
+        }
     };
     return group_colors;
 }
 
-//Generate these
-text_length_group_colors = { "<25": "#E56717",
-                    "25-100": "#FF7F50",
-                    "100-250": "#E55451",
-                    "250-500": "#E42217",
-                    "500-1000": "#9F000F",
-                    ">1000": "#800517"};
+//console.log("colorbrewer:");
+//console.log(d3.d3_rgb_names);
 
-language_colors = { "Standaardnederlands": "#00BFFF",
-                    "Fries": "#DAA520",
-                    "Gronings": "#7FFF00",
-                    "Drents": "#D2B48C",
-                    "Vlaams": "#556B2F",
-                    "personal_narrative": "#DA70D6",
-                    "legende": "#6A5ACD",
-                    "exempel": "#FFA500",
-                    "mythe": "#555555",
-                    "lied": "#FF00FF",
-                    "kwispel": "#FF0066",
-                    "other": "#FF0000",
-                    "personal": "#FF00FF",
-                    "none": "#FFFFE0"};
+text_length_groups =["<25",
+                    "25-100",
+                    "100-250",
+                    "250-500",
+                    "500-1000",
+                    ">1000",
+                    "other"];
+
+text_length_group_colors = array_color_generator_darker(text_length_groups, "orangered");
+
+languages = ["Standaardnederlands",
+            "Fries (Woudfries)",
+            "17e-eeuws Nederlands",
+            "Gronings",
+            "Fries (woudfries)",
+            "Vlaams",
+            "Middelnederlands",
+            "Noord-Brabants",
+            "Fries",
+            "Gendts (Achterhoeks)",
+            "Brabants",
+            "Liemers",
+            "Engels",
+            "Zuid-Hollands",
+            "Waterlands",
+            "Drents",
+            "Utrechts",
+            "Zeeuws",
+            "Liempds",
+            "Overijssels",
+            "Limburgs",
+            "Duits",
+            "n.v.t.",
+            "Standaardnederlands (allochtoon)",
+            "Dordts",
+            "Latijn",
+            "Frans",
+            "18e-eeuws Nederlands",
+            "Gelders",
+            "Alblasserwaards",
+            "Helmonds",
+            "Turks",
+            "Ambachts",
+            "Bleskensgraafs",
+            "Rijsoords",
+            "Brandwijks",
+            "Bergambachts",
+            "Noord-Hollands",
+            "Marokkaans_Berbers",
+            "Heenvliets",
+            "Twents",
+            "Marokkaans",
+            "Engels (Amerikaans)",
+            "Arabisch",
+            "Capels",
+            "Nedersaksisch",
+            "Zaans",
+            "Barendrechts",
+            "Marokkaans Arabisch",
+            "Spaans",
+            "Hoeksewaards",
+            "Amsterdams",
+            "Gouderaks",
+            "Mijnsheerenlands",
+            "Hoornaars",
+            "Slikkerveers",
+            "Italiaans",
+            "Nederlands, Brabants",
+            "Nederlands-Indisch",
+            "Simonshavens",
+            "Sliedrechts",
+            "Veluws",
+            "Deens",
+            "Surinaams",
+            "Antwerps",
+            "15e-eeuws Nederlands",
+            "dialect",
+            "16e-eeuws Nederlands",
+            "'s-Gravendeels",
+            "quasi-Arabisch",
+            "pseudo-Duits",
+            "Zuid-Afrikaans",
+            "Heicops",
+            "Indonesisch",
+            "Sranan Tongo",
+            "Hekelings",
+            "Brabants?",
+            "Sallands",
+            "Rockanjes",
+            "Arkels",
+            "Oud-Grieks",
+            "Noordbrabants",
+            "Korendijks",
+            "Nieuwlands",
+            "Lexmonds",
+            "jongerentaal",
+            "jiddisch",
+            "Lekkerlands",
+            "Zweeds",
+            "Zuidafrikaans",
+            "Lekkerkerks",
+            "Latijn (potjeslatijn)",
+            "Zuid-Beijerlands",
+            "Krimpens",
+            "ZEEUWS",
+            "Wijngaards",
+            "Westfries",
+            "Joods-Amsterdams",
+            "Deventers",
+            "Westfaals",
+            "Waals",
+            "Vlaams accent",
+            "Valkenburgs",
+            "Hoogduits",
+            "Tsjechisch",
+            "Tilburgs",
+            "Bunschoten-Spakenburgs",
+            "Aalsmeers",
+            "Schiermonnikoogs",
+            "Gulpens",
+            "Piershils",
+            "Oud-Beijerlands",
+            "Goerees",
+            "Nijmeegs (Gelders)",
+            "Brab ants",
+            "Amersfoorts",
+            "Nederduits?",
+            "Nederduits",
+            "Moluks",
+            "Zuidlands",
+            "Frans_(uitdrukking)",
+            "bargoens",
+            "Barnevelds",
+            "Middelnederlands?",
+            "quasi-allochtoon Nederlands",
+            "Flakkees",
+            "quasi-Marokkaans",
+            "quasi-Haags",
+            "quasi-Engels",
+            "quasi-Duits",
+            "pseudo-Latijn",
+            "Engels (Canadees)",
+            "Bargoens",
+            "quasi-Marrokaans",
+            "Afrikaans",
+            "17e-eeuws Nederlands?",
+            "other"];
+
+language_colors = array_color_generator(languages);
 
 types = ["almanak",
         "artikel",
@@ -184,48 +335,70 @@ types = ["almanak",
         "centsprent",
         "drama",
         "e-mail",
+        "elpee",
         "fax",
         "handschrift",
         "internet",
         "kluchtboek",
         "krant",
+        "manuscript",
         "lp",
         "mondeling",
         "televisie",
+        "tijdschriftartikel",
         "vragenlijst",
-        "informatiebord"];
+        "informatiebord",
+        "other"];
 
 type_colors = array_color_generator(types);
-console.log(type_colors);
 
-subgenre_colors = { "broodjeaapverhaal": "#00BFFF",
-                    "sprookje": "#DAA520",
-                    "mop": "#7FFF00",
-                    "sage": "#D2B48C",
-                    "raadsel": "#556B2F",
-                    "personal_narrative": "#DA70D6",
-                    "legende": "#6A5ACD",
-                    "exempel": "#FFA500",
-                    "mythe": "#555555",
-                    "lied": "#FF00FF",
-                    "kwispel": "#FF0066",
-                    "other": "#FF0000",
-                    "personal": "#FF00FF",
-                    "none": "#FFFFE0"};
+subgenres = ["broodjeaapverhaal",
+                "sprookje",
+                "mop",
+                "sage",
+                "raadsel",
+                "personal narrative",
+                "legende",
+                "exempel",
+                "mythe",
+                "lied",
+                "kwispel",
+                "personal",
+                "other"];
 
-extreme_colors = { "ja": "#00BFFF",
-                    "nee": "#555555",
-                    "none": "#FFFFE0"};
+subgenre_colors = array_color_generator(subgenres);
 
+item_types = [  "Volksverhaal",
+                "Volksverhaaltype",
+                "Lexicon item",
+                "Persoon",
+                "other"];
+item_type_colors = array_color_generator(item_types);
 
-literary_colors = { "ja": "#00BFFF",
-                    "nee": "#555555",
-                    "none": "#FFFFE0"};
+extreme_colors = { "ja": {class_code: "ABCDEFGH", color: "#FF0000"},
+                    "nee": {class_code: "BCDEFGHI", color: "#00FF00"},
+                    "ja (bewerkt)": {class_code: "CDEFGHIJ", color: "#FFAAAA"},
+                    "nee (bewerkt)": {class_code: "DEFGHIJK", color: "#AAFFAA"},
+                    "other": {class_code: "EFGHIJKL", color: "#FFFFE0"}};
 
-legendOptionValues = ["subgenre", "type", "language", "literary", "extreme", "text_length_group"];
-selectedLegendOptionValue = "";
+literary_colors = { "ja": {class_code: "XABCDEFGH", color: "#FF0000"},
+                    "nee": {class_code: "XBCDEFGHI", color: "#00FF00"},
+                    "ja (bewerkt)": {class_code: "XCDEFGHIJ", color: "#FFAAAA"},
+                    "nee (bewerkt)": {class_code: "XDEFGHIJK", color: "#AAFFAA"},
+                    "other": {class_code: "XEFGHIJKL", color: "#FFFFE0"}};
 
-//var facet_addition = "&facet=true&facet.mincount=1&wt=json&rows=0&facet.field=" + show_facets.join("&facet.field=")
+legendOptionValues = ["subgenre", "type", "language", "literary", "extreme", "text_length_group", "item_type"];
+selectedLegendOptionValue = ["subgenre"];
+
+legend_colors = {"subgenre":        subgenre_colors, 
+                "type":             type_colors, 
+                "language":         language_colors, 
+                "literary":         literary_colors, 
+                "extreme":          extreme_colors, 
+                "text_length_group":text_length_group_colors,
+                "item_type":        item_type_colors};
+
+///this can all be generated on the fly, with the languages present in the retrieved set of items
 
 //var initial_id_search = "19199"; //nederlandermop
 
@@ -257,7 +430,7 @@ var links_same_size = false;
 var links_width = 5;
 
 var nodes_same_size = false;
-var nodes_size = 15;
+var nodes_size = 10;
 
 var title_in_node = true;
 var show_dragbubbles = true;
@@ -299,8 +472,9 @@ function ViewModel() {
 
     self.all_selected = ko.observable(false);
 
-    self.build_tree = ko.observableArray(legendOptionValues);
     self.selectedLegendOptionValue = ko.observableArray(selectedLegendOptionValue);
+
+    self.legend_colors = ko.observable(legend_colors);
 
     self.node_params = ko.observable(node_params);
 
@@ -326,13 +500,16 @@ function ViewModel() {
     self.facets_results = ko.observableArray([]);
     self.id_search_result = ko.observableArray([]);
     self.neighbor_search_results = ko.observableArray([]);
-    self.build_tree = ko.observableArray([]);
     
     self.network_graph = ko.observable(network_graph); //use this one for full refresh
     self.network_special_links = ko.observableArray([]);
 
     //keeping track of selected objects
     self.selected_nodes = ko.observableArray([]);
+
+    self.total_nodes = ko.computed(function() {
+            return "Nodes: " + this.network_graph().nodes.length + " / Edges: " + this.network_graph().links.length + " / Selected: " + self.selected_nodes().length;
+        }, this);
     
     //queries
     self.vb_search_link = ko.observable(vb_search_link);
@@ -679,12 +856,29 @@ function generate_item_query(item){
     return or_pre_query;
 }
 
+function retrieve_existing_ids_from_pool(vm){
+    search_ids = [];
+    if (vm.network_graph().nodes.length > 0){ //if there is a network
+        nodes = vm.network_graph().nodes;
+        for (node in nodes){
+            search_ids.push(nodes[node].id);
+        }
+    }
+    search_string = search_ids.join(" OR id:");
+//    console.log(search_string);
+    return search_string;
+}
+
 function create_search_command_from_item_id_return(item, max_neighbor_results, vm){
     var or_pre_query = generate_item_query(item);
     var additional = "&start=0&rows=" + max_neighbor_results;
-    additional += "&fl=score,id"; 
+    additional += "&fl=score,id";
+    retrieve_existing_ids_from_pool(vm);
+//    additional += "&fq=id:" + retrieve_existing_ids_from_pool(vm);
+    // add extra search parameters to search in existing pool
     var neighbor_search_query = or_pre_query.join(" OR ");// + counter_identical_return;
     var neighbor_search_command = neighbor_search_proxy + neighbor_search_query + additional;
+//    console.log(neighbor_search_command);
     return neighbor_search_command;
 }
 
@@ -1013,8 +1207,8 @@ function MenuViewer(vm){
         
         $('.controls div').each(function() {
             var param = $(this).attr('id');
-            console.log(param);
-            console.log(vm.node_params()[param].value());
+//            console.log(param);
+//            console.log(vm.node_params()[param].value());
             $(this).slider({
                 slide: onSlide(param),
                 min: vm.node_params()[param].min,
